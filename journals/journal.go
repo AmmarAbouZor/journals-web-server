@@ -65,7 +65,7 @@ func PutJournal(c *gin.Context) {
 }
 
 func DeleteJournal(c *gin.Context) {
-	idString := c.Param("id")
+	idString := c.Query("id")
 
 	id, err := strconv.ParseInt(idString, 10, 0)
 
@@ -79,7 +79,7 @@ func DeleteJournal(c *gin.Context) {
 	for index := range testJournals {
 		if testJournals[index].ID == id {
 			delIdx = index
-			return
+			break
 		}
 	}
 
