@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/AmmarAbouZor/journals_backend/journals"
+	"github.com/AmmarAbouZor/journals_web_server/journals"
 	"github.com/gin-gonic/gin"
 )
 

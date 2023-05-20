@@ -1,4 +1,4 @@
-module github.com/AmmarAbouZor/journals_backend
+module github.com/AmmarAbouZor/journals_web_server
 
 go 1.20
 
