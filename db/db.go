@@ -44,5 +44,79 @@ func InitDB() error {
 		return fmt.Errorf("Ping Error: %v", pingErr)
 	}
 
+	//TODO: remove test code when not needed anymore
+	// for _, j := range m.TestJournals {
+	// 	_, err := AddJournal(j)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
 	return nil
+}
+
+func AddJournal(journal m.Journal) (int64, error) {
+	result, err := db.Exec("INSERT INTO journals (title, date, content) VALUES (?, ?, ?)", journal.Title, journal.Date, journal.Content)
+	if err != nil {
+		return -1, fmt.Errorf("Add journal failed: %v", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return -1, fmt.Errorf("AddJournal: LastInsertId error: %v", err)
+	}
+
+	return id, nil
+}
+
+func GetJournals() ([]m.Journal, error) {
+	var journals []m.Journal
+
+	rows, err := db.Query("SELECT * FROM journals ORDER BY date DESC")
+	if err != nil {
+		return nil, fmt.Errorf("Get Journals faild: %v", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var j m.Journal
+		if err := rows.Scan(&j.ID, &j.Title, &j.Date, &j.Content); err != nil {
+			return nil, fmt.Errorf("GetJournals: Scan results error: %v", err)
+		}
+
+		journals = append(journals, j)
+	}
+
+	return journals, nil
+}
+
+func UpdateJournal(journal *m.Journal) (int64, error) {
+	result, err := db.Exec("UPDATE journals SET title=? date=? content=? WHERE id=?",
+		journal.Title, journal.Date, journal.Content, journal.ID)
+
+	if err != nil {
+		return -1, fmt.Errorf("UpdateJornal error: %v", err)
+	}
+
+	affect, err := result.RowsAffected()
+	if err != nil {
+		return -1, fmt.Errorf("UpdateJornal error: %v", err)
+	}
+
+	return affect, nil
+}
+
+func DeleteJournal(id int64) (int64, error) {
+	result, err := db.Exec("DELETE FROM journals WHERE id=?", id)
+	if err != nil {
+		return -1, fmt.Errorf("DeleteJournal error: %v", err)
+	}
+
+	affect, err := result.RowsAffected()
+	if err != nil {
+		return -1, fmt.Errorf("DeleteJournal error: %v", err)
+	}
+
+	return affect, nil
 }

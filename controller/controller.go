@@ -1,15 +1,23 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/AmmarAbouZor/journals_web_server/db"
 	m "github.com/AmmarAbouZor/journals_web_server/models"
 	"github.com/gin-gonic/gin"
 )
 
 func GetJournals(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, m.TestJournals)
+	journals, err := db.GetJournals()
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error while retrieving journals"})
+		return
+	}
+	c.IndentedJSON(http.StatusOK, journals)
 }
 
 func PostJournal(c *gin.Context) {
@@ -19,9 +27,14 @@ func PostJournal(c *gin.Context) {
 		return
 	}
 
-	journal.ID = m.TestJournals[len(m.TestJournals)-1].ID + 1
+	id, err := db.AddJournal(journal)
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error while creating journal"})
+		return
+	}
 
-	m.TestJournals = append(m.TestJournals, journal)
+	journal.ID = id
 
 	c.IndentedJSON(http.StatusCreated, journal)
 }
@@ -33,20 +46,14 @@ func PutJournal(c *gin.Context) {
 		return
 	}
 
-	for idx := range m.TestJournals {
-		journal := &m.TestJournals[idx]
-
-		if putJournal.ID == journal.ID {
-			journal.Title = putJournal.Title
-			journal.Date = putJournal.Date
-			journal.Content = putJournal.Content
-
-			c.IndentedJSON(http.StatusOK, journal)
-			return
-		}
+	_, err := db.UpdateJournal(&putJournal)
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error while updating journal"})
+		return
 	}
 
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "journal not found"})
+	c.IndentedJSON(http.StatusOK, putJournal)
 }
 
 func DeleteJournal(c *gin.Context) {
@@ -59,16 +66,12 @@ func DeleteJournal(c *gin.Context) {
 		return
 	}
 
-	delIdx := -1
-
-	for index := range m.TestJournals {
-		if m.TestJournals[index].ID == id {
-			delIdx = index
-			break
-		}
+	_, err = db.DeleteJournal(id)
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error while deleting journal"})
+		return
 	}
-
-	m.TestJournals = append(m.TestJournals[:delIdx], m.TestJournals[delIdx+1:]...)
 
 	c.Status(http.StatusOK)
 }
