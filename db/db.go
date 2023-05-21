@@ -16,7 +16,7 @@ import (
 
 var db *sql.DB
 
-const migrationsPath = "file://db/db_migrations"
+var migrationsPath = "file://db/db_migrations"
 
 func InitDB() error {
 
@@ -49,13 +49,6 @@ func InitDB() error {
 		return fmt.Errorf("Ping Error: %v", pingErr)
 	}
 
-	//TODO: remove test code when not needed anymore
-	// for _, j := range m.TestJournals {
-	// 	_, err := AddJournal(j)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 	return nil
 }
 
