@@ -14,6 +14,7 @@ func main() {
 	if err := db.InitDB(); err != nil {
 		log.Fatalf("Database error: %v", err)
 	}
+	defer db.CloseDB()
 
 	router := gin.Default()
 

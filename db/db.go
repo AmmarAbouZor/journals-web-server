@@ -56,7 +56,14 @@ func InitDB() error {
 	// 		return err
 	// 	}
 	// }
+	return nil
+}
 
+func CloseDB() error {
+	err := db.Close()
+	if err != nil {
+		return fmt.Errorf("Error while closing database: %v", err)
+	}
 	return nil
 }
 
