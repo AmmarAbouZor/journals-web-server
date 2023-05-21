@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	m "github.com/AmmarAbouZor/journals_web_server/models"
 
@@ -15,14 +16,18 @@ import (
 
 var db *sql.DB
 
-// TODO: get db path from environment variable
-const dbFile = "journals.db"
 const migrationsPath = "file://db/db_migrations"
 
 func InitDB() error {
 
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		fmt.Println("DB_PATH env varialbe not set. Defaulting to 'journals.db'")
+		dbPath = "journals.db"
+	}
+
 	var err error
-	db, err = sql.Open("sqlite3", dbFile)
+	db, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return fmt.Errorf("Oppining/creating database failed: %v", err)
 	}
