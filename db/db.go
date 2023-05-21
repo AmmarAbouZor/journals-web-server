@@ -97,7 +97,7 @@ func GetJournals() ([]m.Journal, error) {
 }
 
 func UpdateJournal(journal *m.Journal) (int64, error) {
-	result, err := db.Exec("UPDATE journals SET title=? date=? content=? WHERE id=?",
+	result, err := db.Exec("UPDATE journals SET title=?, date=?, content=? WHERE id=?",
 		journal.Title, journal.Date, journal.Content, journal.ID)
 
 	if err != nil {
