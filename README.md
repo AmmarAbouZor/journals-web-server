@@ -1,6 +1,6 @@
 # Journals-Web-Server
 
-The Journals Web Server is a backend server written in Go that provides CRUD (Create, Read, Update, Delete) operations for managing journals. It serves as the backend for the [TUI Journal](https://github.com/AmmarAbouZor/tui-journal) application.
+Journals-Web-Server is a backend server written in Go that provides CRUD (Create, Read, Update, Delete) operations for managing journals. It serves as the backend for the [TUI-Journal](https://github.com/AmmarAbouZor/tui-journal) application.
 
 ## Features
 
@@ -95,4 +95,3 @@ Contributions to the Journals Web Server are welcome! If you encounter any issue
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-```
