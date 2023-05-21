@@ -85,6 +85,17 @@ func TestUpdateJournal(t *testing.T) {
 	affectedRows, err := UpdateJournal(&jrnl)
 	assert.NoError(t, err, "UpdateJournal should not return an error")
 	assert.Equal(t, int64(1), affectedRows, "UpdateJournal should update one row")
+
+	journals, err := GetJournals()
+	assert.NoError(t, err, "GetJournals should not return an error")
+
+	for _, updatedJrnl := range journals {
+		if updatedJrnl.ID == jrnl.ID {
+			assert.Equal(t, updatedJrnl.Title, jrnl.Title, "Title should be updated")
+			assert.Equal(t, updatedJrnl.Content, jrnl.Content, "Content should be updated")
+			return
+		}
+	}
 }
 
 func TestDeleteJournal(t *testing.T) {
