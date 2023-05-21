@@ -14,54 +14,66 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-var db *sql.DB
+type DB interface {
+	CloseDB() error
+	AddJournal(journal m.Journal) (int64, error)
+	GetJournals() ([]m.Journal, error)
+	UpdateJournal(journal *m.Journal) (int64, error)
+	DeleteJournal(id int64) (int64, error)
+}
 
+type SqliteDB struct {
+	dbConnection *sql.DB
+}
+
+// migratoinsPath can't be const since it will be overwriten in unit tests
 var migrationsPath = "file://db/db_migrations"
 
-func InitDB() error {
-
+func InitDB() (DB, error) {
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
 		fmt.Println("DB_PATH env varialbe not set. Defaulting to 'journals.db'")
 		dbPath = "journals.db"
 	}
 
+	db := &SqliteDB{}
+
 	var err error
-	db, err = sql.Open("sqlite3", dbPath)
+	db.dbConnection, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return fmt.Errorf("Oppining/creating database failed: %v", err)
+		return nil, fmt.Errorf("Oppining/creating database failed: %v", err)
 	}
 
-	driver, drivErr := migratSqlit.WithInstance(db, &migratSqlit.Config{})
+	driver, drivErr := migratSqlit.WithInstance(db.dbConnection, &migratSqlit.Config{})
 	if drivErr != nil {
-		return fmt.Errorf("Get database driver failed: %v", drivErr)
+		return nil, fmt.Errorf("Get database driver failed: %v", drivErr)
 	}
 
 	m, migrateErr := migrate.NewWithDatabaseInstance(migrationsPath, "sqlite3", driver)
 
 	if migrateErr != nil {
-		return fmt.Errorf("Migration error: %v", migrateErr)
+		return nil, fmt.Errorf("Migration error: %v", migrateErr)
 	}
 
 	m.Up()
 
-	if pingErr := db.Ping(); pingErr != nil {
-		return fmt.Errorf("Ping Error: %v", pingErr)
+	if pingErr := db.dbConnection.Ping(); pingErr != nil {
+		return nil, fmt.Errorf("Ping Error: %v", pingErr)
 	}
 
-	return nil
+	return db, nil
 }
 
-func CloseDB() error {
-	err := db.Close()
+func (db *SqliteDB) CloseDB() error {
+	err := db.dbConnection.Close()
 	if err != nil {
 		return fmt.Errorf("Error while closing database: %v", err)
 	}
 	return nil
 }
 
-func AddJournal(journal m.Journal) (int64, error) {
-	result, err := db.Exec("INSERT INTO journals (title, date, content) VALUES (?, ?, ?)", journal.Title, journal.Date, journal.Content)
+func (db *SqliteDB) AddJournal(journal m.Journal) (int64, error) {
+	result, err := db.dbConnection.Exec("INSERT INTO journals (title, date, content) VALUES (?, ?, ?)", journal.Title, journal.Date, journal.Content)
 	if err != nil {
 		return -1, fmt.Errorf("Add journal failed: %v", err)
 	}
@@ -74,10 +86,10 @@ func AddJournal(journal m.Journal) (int64, error) {
 	return id, nil
 }
 
-func GetJournals() ([]m.Journal, error) {
+func (db *SqliteDB) GetJournals() ([]m.Journal, error) {
 	var journals []m.Journal
 
-	rows, err := db.Query("SELECT * FROM journals ORDER BY date DESC")
+	rows, err := db.dbConnection.Query("SELECT * FROM journals ORDER BY date DESC")
 	if err != nil {
 		return nil, fmt.Errorf("Get Journals faild: %v", err)
 	}
@@ -96,8 +108,8 @@ func GetJournals() ([]m.Journal, error) {
 	return journals, nil
 }
 
-func UpdateJournal(journal *m.Journal) (int64, error) {
-	result, err := db.Exec("UPDATE journals SET title=?, date=?, content=? WHERE id=?",
+func (db *SqliteDB) UpdateJournal(journal *m.Journal) (int64, error) {
+	result, err := db.dbConnection.Exec("UPDATE journals SET title=?, date=?, content=? WHERE id=?",
 		journal.Title, journal.Date, journal.Content, journal.ID)
 
 	if err != nil {
@@ -112,8 +124,8 @@ func UpdateJournal(journal *m.Journal) (int64, error) {
 	return affect, nil
 }
 
-func DeleteJournal(id int64) (int64, error) {
-	result, err := db.Exec("DELETE FROM journals WHERE id=?", id)
+func (db *SqliteDB) DeleteJournal(id int64) (int64, error) {
+	result, err := db.dbConnection.Exec("DELETE FROM journals WHERE id=?", id)
 	if err != nil {
 		return -1, fmt.Errorf("DeleteJournal error: %v", err)
 	}

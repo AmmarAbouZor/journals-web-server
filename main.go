@@ -5,13 +5,14 @@ import (
 	"log"
 	"os"
 
-	c "github.com/AmmarAbouZor/journals_web_server/controller"
+	"github.com/AmmarAbouZor/journals_web_server/controller"
 	"github.com/AmmarAbouZor/journals_web_server/db"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	if err := db.InitDB(); err != nil {
+	db, err := db.InitDB()
+	if err != nil {
 		log.Fatalf("Database error: %v", err)
 	}
 	defer db.CloseDB()
@@ -19,6 +20,8 @@ func main() {
 	router := gin.Default()
 
 	journalGroup := router.Group("/journal")
+
+	c := controller.Controller{DB: db}
 
 	journalGroup.GET("", c.GetJournals)
 	journalGroup.POST("", c.PostJournal)

@@ -10,8 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetJournals(c *gin.Context) {
-	journals, err := db.GetJournals()
+type Controller struct {
+	DB db.DB
+}
+
+func (ct *Controller) GetJournals(c *gin.Context) {
+	journals, err := ct.DB.GetJournals()
 	if err != nil {
 		fmt.Printf("Database error: %v\n", err)
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error while retrieving journals"})
@@ -20,14 +24,14 @@ func GetJournals(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, journals)
 }
 
-func PostJournal(c *gin.Context) {
+func (ct *Controller) PostJournal(c *gin.Context) {
 	var journal m.Journal
 
 	if err := c.BindJSON(&journal); err != nil {
 		return
 	}
 
-	id, err := db.AddJournal(journal)
+	id, err := ct.DB.AddJournal(journal)
 	if err != nil {
 		fmt.Printf("Database error: %v\n", err)
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error while creating journal"})
@@ -39,14 +43,14 @@ func PostJournal(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, journal)
 }
 
-func PutJournal(c *gin.Context) {
+func (ct *Controller) PutJournal(c *gin.Context) {
 	var putJournal m.Journal
 
 	if err := c.BindJSON(&putJournal); err != nil {
 		return
 	}
 
-	_, err := db.UpdateJournal(&putJournal)
+	_, err := ct.DB.UpdateJournal(&putJournal)
 	if err != nil {
 		fmt.Printf("Database error: %v\n", err)
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error while updating journal"})
@@ -56,7 +60,7 @@ func PutJournal(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, putJournal)
 }
 
-func DeleteJournal(c *gin.Context) {
+func (ct *Controller) DeleteJournal(c *gin.Context) {
 	idString := c.Query("id")
 
 	id, err := strconv.ParseInt(idString, 10, 0)
@@ -66,7 +70,7 @@ func DeleteJournal(c *gin.Context) {
 		return
 	}
 
-	_, err = db.DeleteJournal(id)
+	_, err = ct.DB.DeleteJournal(id)
 	if err != nil {
 		fmt.Printf("Database error: %v\n", err)
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error while deleting journal"})

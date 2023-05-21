@@ -23,28 +23,29 @@ func setup() {
 	os.Setenv("DB_PATH", ":memory:")
 }
 
-func initWithDefaultValues() error {
-	if err := InitDB(); err != nil {
-		return err
+func initWithDefaultValues() (DB, error) {
+	db, err := InitDB()
+	if err != nil {
+		return nil, err
 	}
 
 	for _, jnl := range TestJournals {
-		_, err := AddJournal(jnl)
+		_, err := db.AddJournal(jnl)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return db, nil
 }
 
 func TestAddJournal(t *testing.T) {
 	setup()
 
-	err := initWithDefaultValues()
+	db, err := initWithDefaultValues()
 	assert.NoError(t, err, "initWithDefaultValues should not return an error")
 
-	defer CloseDB()
+	defer db.CloseDB()
 
 	journal := models.Journal{
 		Title:   "title 1",
@@ -52,7 +53,7 @@ func TestAddJournal(t *testing.T) {
 		Content: "content 1",
 	}
 
-	id, err := AddJournal(journal)
+	id, err := db.AddJournal(journal)
 	assert.NoError(t, err, "AddJournal should not return an error")
 	assert.NotEqual(t, int64(-1), id, "AddJournal should return a valid ID")
 }
@@ -60,12 +61,12 @@ func TestAddJournal(t *testing.T) {
 func TestGetJournals(t *testing.T) {
 	setup()
 
-	err := initWithDefaultValues()
+	db, err := initWithDefaultValues()
 	assert.NoError(t, err, "initWithDefaultValues should not return an error")
 
-	defer CloseDB()
+	defer db.CloseDB()
 
-	journals, err := GetJournals()
+	journals, err := db.GetJournals()
 	assert.NoError(t, err, "GetJournals should not return an error")
 	assert.Len(t, journals, len(TestJournals), "GetJournals should return the length of TestJournals")
 }
@@ -73,20 +74,20 @@ func TestGetJournals(t *testing.T) {
 func TestUpdateJournal(t *testing.T) {
 	setup()
 
-	err := initWithDefaultValues()
+	db, err := initWithDefaultValues()
 	assert.NoError(t, err, "initWithDefaultValues should not return an error")
 
-	defer CloseDB()
+	defer db.CloseDB()
 
 	var jrnl = TestJournals[len(TestJournals)-1]
 	jrnl.Content = "content changed"
 	jrnl.Title = "title changed"
 
-	affectedRows, err := UpdateJournal(&jrnl)
+	affectedRows, err := db.UpdateJournal(&jrnl)
 	assert.NoError(t, err, "UpdateJournal should not return an error")
 	assert.Equal(t, int64(1), affectedRows, "UpdateJournal should update one row")
 
-	journals, err := GetJournals()
+	journals, err := db.GetJournals()
 	assert.NoError(t, err, "GetJournals should not return an error")
 
 	for _, updatedJrnl := range journals {
@@ -101,18 +102,18 @@ func TestUpdateJournal(t *testing.T) {
 func TestDeleteJournal(t *testing.T) {
 	setup()
 
-	err := initWithDefaultValues()
+	db, err := initWithDefaultValues()
 	assert.NoError(t, err, "initWithDefaultValues should not return an error")
 
-	defer CloseDB()
+	defer db.CloseDB()
 
 	id := TestJournals[0].ID
 
-	affectedRows, err := DeleteJournal(id)
+	affectedRows, err := db.DeleteJournal(id)
 	assert.NoError(t, err, "DeleteJournal should not return an error")
 	assert.Equal(t, int64(1), affectedRows, "DeleteJournal should delete one row")
 
-	journals, err := GetJournals()
+	journals, err := db.GetJournals()
 	assert.NoError(t, err, "GetJournals should not return an error")
 	assert.Len(t, journals, len(TestJournals)-1, "GetJournals should return the length of TestJournals minus the deleted journal")
 }
